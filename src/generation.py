@@ -15,8 +15,23 @@ def format_step_prompt(question: str) -> str:
     
     Returns a raw instruction string (no chat template applied).
     """
-    # TODO: Build zero-shot prompt enforcing step-structured reasoning
-    raise NotImplementedError("Implement format_step_prompt in src/generation.py")
+    return (
+        "Solve the following math word problem step by step.\n\n"
+        f"Problem: {question}\n\n"
+        "Write your solution in plain text using exactly this format:\n"
+        "Step 1: <first deduction or calculation>\n"
+        "Step 2: <next deduction or calculation>\n"
+        "...\n"
+        "Step K: <final calculation>\n"
+        "Final Answer: <integer>\n\n"
+        "Rules:\n"
+        "- Start every step on a new line with \"Step <number>:\" and put one deduction or calculation in each step.\n"
+        "- Write each calculation with its result, for example 16 - 7 = 9.\n"
+        "- Use plain text only: no markdown, no headings, no bold, no LaTeX, no \\boxed{}.\n"
+        "- End with one last line \"Final Answer: \" followed by the answer as a plain integer, "
+        "with no units, words, currency signs or commas.\n"
+        "- Write nothing after the Final Answer line."
+    )
 
 
 def compute_majority_vote(answers: list[int | None]) -> int | None:
