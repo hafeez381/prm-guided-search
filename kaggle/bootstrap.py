@@ -7,7 +7,7 @@ import tarfile
 
 subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-U", "bitsandbytes"], check=True)
 
-WORK = "/kaggle/working/code"
+WORK = "/tmp/code"
 if not os.path.isdir(WORK):
     tars = glob.glob("/kaggle/input/**/code.tar", recursive=True)
     if tars:
