@@ -12,3 +12,8 @@ outputs/*
 !outputs/.gitkeep
 
 
+.venv/
+outputs/_smoke/
+runs/
+kaggle/output/
+kaggle/code/
