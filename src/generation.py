@@ -1,7 +1,11 @@
 """
 src/generation.py - Prompt formatting and baseline generation routines.
 """
+import time
 from typing import Any, Callable
+
+from .extraction import extract_answer, parse_steps
+from .utils import GREEDY_GEN_KWARGS, SAMPLING_GEN_KWARGS, make_hf_generate_fn
 
 GenerateFn = Callable[[str, int, dict], list[dict]]
 # generate_fn(raw_prompt, num_samples, gen_kwargs) -> list of {"text": str, "num_tokens": int}
@@ -40,8 +44,37 @@ def compute_majority_vote(answers: list[int | None]) -> int | None:
     Ignores None values. Breaks ties deterministically in favor of the answer
     that appeared earliest in the list.
     """
-    # TODO: Implement deterministic majority voting
-    raise NotImplementedError("Implement compute_majority_vote in src/generation.py")
+    counts: dict[int, int] = {}
+    for answer in answers:
+        if answer is not None:
+            counts[answer] = counts.get(answer, 0) + 1
+    if not counts:
+        return None
+    # dicts keep insertion order, so max() returns the earliest-seen answer among equal counts
+    return max(counts, key=counts.get)
+
+
+def to_candidate(output: dict) -> dict[str, Any]:
+    """Turns one generate_fn output into a candidate record."""
+    text = output["text"]
+    return {
+        "completion": text,
+        "steps": parse_steps(text),
+        "answer": extract_answer(text),
+        "num_tokens": int(output["num_tokens"]),
+    }
+
+
+def sample_candidates(model: Any, tokenizer: Any, question: str, n: int, temperature: float,
+                      generate_fn: GenerateFn | None) -> list[dict[str, Any]]:
+    """Draws n temperature-sampled step-structured completions in one generate_fn call."""
+    if n <= 0:
+        return []
+    generate_fn = generate_fn or make_hf_generate_fn(model, tokenizer)
+    gen_kwargs = dict(SAMPLING_GEN_KWARGS, temperature=temperature)
+    outputs = generate_fn(format_step_prompt(question), n, gen_kwargs)
+    assert len(outputs) == n, f"generate_fn returned {len(outputs)} samples, expected {n}"
+    return [to_candidate(o) for o in outputs]
 
 
 def run_greedy(
@@ -58,8 +91,21 @@ def run_greedy(
     Returns:
       prompt, completion, steps, answer, generation_calls, generated_tokens, time_seconds
     """
-    # TODO: Implement greedy baseline decoding
-    raise NotImplementedError("Implement run_greedy in src/generation.py")
+    generate_fn = generate_fn or make_hf_generate_fn(model, tokenizer)
+    prompt = format_step_prompt(question)
+    start = time.perf_counter()
+    output = generate_fn(prompt, 1, dict(GREEDY_GEN_KWARGS))[0]
+    elapsed = time.perf_counter() - start
+    candidate = to_candidate(output)
+    return {
+        "prompt": prompt,
+        "completion": candidate["completion"],
+        "steps": candidate["steps"],
+        "answer": candidate["answer"],
+        "generation_calls": 1,
+        "generated_tokens": candidate["num_tokens"],
+        "time_seconds": elapsed,
+    }
 
 
 def run_self_consistency(
@@ -77,5 +123,13 @@ def run_self_consistency(
       candidates [each: completion, steps, answer, num_tokens], answer, 
       generation_calls, generated_tokens, time_seconds
     """
-    # TODO: Implement Self-Consistency sampling and majority voting
-    raise NotImplementedError("Implement run_self_consistency in src/generation.py")
+    start = time.perf_counter()
+    candidates = sample_candidates(model, tokenizer, question, n, temperature, generate_fn)
+    elapsed = time.perf_counter() - start
+    return {
+        "candidates": candidates,
+        "answer": compute_majority_vote([c["answer"] for c in candidates]),
+        "generation_calls": len(candidates),
+        "generated_tokens": sum(c["num_tokens"] for c in candidates),
+        "time_seconds": elapsed,
+    }
