@@ -1,0 +1,13 @@
+{
+  "id": "abdul381/prm-guided-search-k0-env",
+  "title": "prm-guided-search k0 env",
+  "code_file": "k0_env.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": ["abdul381/prm-guided-search-code"],
+  "competition_sources": [],
+  "kernel_sources": []
+}
