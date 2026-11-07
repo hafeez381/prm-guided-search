@@ -97,3 +97,8 @@ def test_self_consistency_counts_and_kwargs():
     assert res["answer"] == 4
     assert res["generation_calls"] == 5
     assert res["generated_tokens"] == sum(7 + i for i in range(5))
+
+
+def test_compliance_check_never_reads_ground_truth():
+    src = open(os.path.join(os.path.dirname(__file__), "..", "compliance_check.py")).read()
+    assert "ground_truth" not in src and "accuracy" not in src.lower()
