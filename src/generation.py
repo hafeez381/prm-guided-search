@@ -32,9 +32,11 @@ def format_step_prompt(question: str) -> str:
         "- Start every step on a new line with \"Step <number>:\" and put one deduction or calculation in each step.\n"
         "- Write each calculation with its result, for example 16 - 7 = 9.\n"
         "- Use plain text only: no markdown, no headings, no bold, no LaTeX, no \\boxed{}.\n"
+        "- Write math the way you would type it in a text message, for example (1/2) * 2 = 1 or 3 x 4 = 12. "
+        "Never use \\( \\), \\[ \\], \\frac, \\times or \\text.\n"
         "- End with one last line \"Final Answer: \" followed by the answer as a plain integer, "
         "with no units, words, currency signs or commas.\n"
-        "- Write nothing after the Final Answer line."
+        "- Always finish with the Final Answer line, and write nothing after it."
     )
 
 
