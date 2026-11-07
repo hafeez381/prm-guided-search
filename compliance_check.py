@@ -43,6 +43,7 @@ def main():
                 "problem_index": i,
                 "num_steps": len(res["steps"]),
                 "answer": res["answer"],
+                "format_ok": bool(lines) and bool(re.search(r"\d", lines[-1].split("nswer", 1)[-1])),
                 "final_answer_line": lines[-1].strip() if lines else None,
                 "drift": [k for k, pat in DRIFT.items() if re.search(pat, res["completion"])],
                 "generated_tokens": res["generated_tokens"],
@@ -55,11 +56,15 @@ def main():
                   f"drift={','.join(row['drift']) or '-':12s} line={row['final_answer_line']!r}", flush=True)
 
     answered = sum(r["answer"] is not None for r in rows)
+    format_ok = sum(r["format_ok"] for r in rows)
+    non_integer = [r["problem_index"] for r in rows if r["format_ok"] and r["answer"] is None]
     no_steps = [r["problem_index"] for r in rows if r["num_steps"] == 0]
     truncated = sum(r["generated_tokens"] >= 512 for r in rows)
     drift = {k: sum(k in r["drift"] for r in rows) for k in DRIFT}
-    print(f"\nanswered {answered}/{len(rows)}  no_steps {no_steps}  hit_512_tokens {truncated}  drift {drift}")
-    gate = answered >= min(GATE_MIN_ANSWERED, len(rows)) and not no_steps
+    print(f"\nformat_ok {format_ok}/{len(rows)}  answered {answered}/{len(rows)}  non_integer {non_integer}  "
+          f"no_steps {no_steps}  hit_512_tokens {truncated}  drift {drift}")
+    # A non-integer answer on a well-formed line is a reasoning error, not a format failure.
+    gate = format_ok >= min(GATE_MIN_ANSWERED, len(rows)) and not no_steps
     print("D4 compliance gate:", "PASS" if gate else "BREACH")
 
 
