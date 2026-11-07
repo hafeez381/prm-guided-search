@@ -102,3 +102,75 @@ def test_self_consistency_counts_and_kwargs():
 def test_compliance_check_never_reads_ground_truth():
     src = open(os.path.join(os.path.dirname(__file__), "..", "compliance_check.py")).read()
     assert "ground_truth" not in src and "accuracy" not in src.lower()
+
+
+@pytest.mark.parametrize("text,score,rationale", [
+    ("Verdict: **INVALID**\nRationale: Wrong sum.", -1.0, "Wrong sum."),
+    ("VALID? No. Verdict: INVALID", -1.0, ""),
+    ("The step is not valid.", -1.0, ""),
+    ("INVALIDATED", -1.0, ""),
+    ("VALIDATED", -1.0, ""),
+    ("Verdict: VALIDATED\nThe step is valid.", 1.0, ""),
+    ("Rationale: 2.5 + 2.5 = 5. Next.\nVerdict: VALID", 1.0, "2.5 + 2.5 = 5."),
+    ("Verdict: VALID\nRationale: ok", 1.0, "ok"),
+    ("Verdict: VALID\nRationale: line one\nline two.", 1.0, "line one"),
+    ("Verdict: INVALID\nRationale:", -1.0, ""),
+    (None, -1.0, ""),
+])
+def test_parse_judge_decision_edges(text, score, rationale):
+    assert adapter.parse_judge_decision(text) == (score, rationale)
+
+
+def test_judge_prompt_numbering_and_current_step():
+    p = adapter.build_prm_judge_prompt("Q", ["a = 1", "b = 2"], "a + b = 3")
+    assert "Step 1: a = 1\nStep 2: b = 2" in p
+    assert "Current Step: a + b = 3" in p
+    assert "(no preceding steps)" not in p
+    assert "Step 3" not in p
+
+
+def test_score_path_judges_each_prefix_once():
+    prompts = []
+
+    def judge_fn(prompt):
+        prompts.append(prompt)
+        return {"text": "Verdict: VALID\nRationale: Fine.", "num_tokens": 4}
+
+    res = adapter.score_path(question="Q", candidate={"steps": ["s1", "s2", "s3"]}, judge_fn=judge_fn)
+    assert res["judge_calls"] == 3 and res["judge_tokens"] == 12
+    assert "(no preceding steps)" in prompts[0] and "Current Step: s1" in prompts[0]
+    assert "Step 1: s1\nStep 2: s2" in prompts[2] and "Current Step: s3" in prompts[2]
+    empty = adapter.score_path(question="Q", candidate={"steps": []}, judge_fn=judge_fn)
+    assert empty["step_scores"] == [] and empty["judge_calls"] == 0 and len(prompts) == 3
+    assert adapter.score_path(question="Q", candidate=None, judge_fn=judge_fn)["judge_calls"] == 0
+
+
+@pytest.mark.parametrize("scores,strategy,lam,expected", [
+    ([1, 1, 1, 1], "min", 2.0, 1.0),
+    ([1, 1, 1, 1], "product", 2.0, 0.99 ** 4),
+    ([1, 1, 1, 1], "step_penalty", 2.0, 1.0),
+    ([1, -1], "min", 2.0, -1.0),
+    ([1, -1], "product", 2.0, 0.99 * 0.01),
+    ([1, -1], "step_penalty", 2.0, -2.0),
+    ([1, -1], "step_penalty", 0.0, 0.0),
+    ([-1, -1, -1], "product", 2.0, 1e-6),
+    ([-1, -1, -1], "step_penalty", 0.5, -2.5),
+    ([1, -1], "step_penalty", 0.5, -0.5),
+    ([1] * 9 + [-1, -1], "step_penalty", 0.5, 7 / 11 - 1.0),
+    ([], "min", 2.0, -1.0),
+    ([], "product", 2.0, -1.0),
+    ([], "step_penalty", 0.0, -1.0),
+])
+def test_aggregate_hand_values(scores, strategy, lam, expected):
+    assert abs(adapter.aggregate_path_score(scores, strategy, lam) - expected) < 1e-12
+
+
+def test_aggregate_unknown_strategy_raises_even_when_empty():
+    with pytest.raises(ValueError):
+        adapter.aggregate_path_score([], strategy="max")
+
+
+def test_product_never_ties_sound_paths_of_different_length():
+    s4 = adapter.aggregate_path_score([1.0] * 4, "product")
+    s5 = adapter.aggregate_path_score([1.0] * 5, "product")
+    assert s4 - s5 > 1e-9

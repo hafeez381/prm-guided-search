@@ -22,8 +22,19 @@ def aggregate_path_score(
       - 'step_penalty': mean(step_scores) - penalty_lambda * count(r_t == -1.0).
       - An unknown strategy raises ValueError.
     """
-    # TODO: Implement min, product, and step_penalty aggregation
-    raise NotImplementedError("Implement aggregate_path_score in src/search.py")
+    if strategy not in ("min", "product", "step_penalty"):
+        raise ValueError(f"unknown aggregation strategy: {strategy!r}")
+    if not step_scores:
+        return -1.0
+    if strategy == "min":
+        return float(min(step_scores))
+    if strategy == "product":
+        product = 1.0
+        for r in step_scores:
+            product *= min(max((r + 1.0) / 2.0, 0.01), 0.99)
+        return product
+    num_invalid = sum(1 for r in step_scores if r == -1.0)
+    return sum(step_scores) / len(step_scores) - penalty_lambda * num_invalid
 
 
 def select_best_path(
