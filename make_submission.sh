@@ -42,6 +42,7 @@ zip -r "${ARCHIVE_NAME}" \
     src/ \
     submission_adapter.py \
     "${PIPELINE_FILE}" \
+    build_artifacts.py \
     outputs/per_problem.jsonl \
     outputs/results_summary.json \
     outputs/aggregation_ablation.json \

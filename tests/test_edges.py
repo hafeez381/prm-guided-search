@@ -249,3 +249,11 @@ def test_paired_bootstrap_identical_vectors_give_zero_ci():
     acc = {k: v.copy() for _, k in stats.METHODS}
     _, diffs = stats.bootstrap(acc)
     assert all(d["ci"] == [0.0, 0.0] and d["diff"] == 0.0 for d in diffs.values())
+
+
+def test_submission_zip_includes_build_artifacts():
+    # run_all.py imports build_artifacts, so the archive must ship it for the pipeline to run.
+    import pathlib
+    script = (pathlib.Path(__file__).resolve().parent.parent / "make_submission.sh").read_text()
+    zip_cmd = script[script.index("zip -r"):]
+    assert "build_artifacts.py" in zip_cmd.split("-x")[0]
