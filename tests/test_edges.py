@@ -222,3 +222,21 @@ def test_compute_matched_samples_only_the_deficit():
     assert calls == [] and res["generation_calls"] == 0 and res["total_samples"] == 15
     res = adapter.run_compute_matched_self_consistency(question="Q", target_calls=3, generate_fn=gen)
     assert calls == [3] and res["generated_tokens"] == 9 and res["answer"] == 1
+
+
+def test_product_logprob_multiplies_probabilities():
+    assert abs(adapter.aggregate_path_score([0.9, 0.5], "product_logprob") - 0.45) < 1e-12
+    assert adapter.aggregate_path_score([], "product_logprob") == -1.0
+
+
+def test_pipeline_row_from_mocks():
+    import run_all
+    gen, judge = run_all.make_mocks()
+    row = run_all.run_problem(0, "Q", gen, judge)
+    assert len(row["candidates"]) == 15
+    assert all("step_scores" in c for c in row["candidates"][:5])
+    assert not any("step_scores" in c for c in row["candidates"][5:])
+    assert row["judge_calls"] == sum(len(c["steps"]) for c in row["candidates"][:5])
+    assert set(row["predictions"]) == {"greedy", "sc5", "sc15", "prm_min", "prm_product", "prm_step_penalty_0.0",
+                                       "prm_step_penalty_0.5", "prm_step_penalty_2.0"}
+    assert "ground_truth_answer" not in row
