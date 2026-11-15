@@ -1,0 +1,36 @@
+row,verdict,rationale
+0,INVALID,"The total speed calculation should consider the time spent on each activity, not just an average of the speeds."
+1,VALID,The arithmetic is correct and it logically follows from the problem statement.
+2,VALID,The step correctly states the number of downloads in the first month based on the problem statement.
+3,VALID,The arithmetic is correct and follows from the preceding steps.
+4,VALID,The arithmetic is correct and it logically follows from the preceding steps.
+5,VALID,The arithmetic is correct and it logically follows from the problem statement.
+6,INVALID,The current step restates the number of candles Charlie wants to sell rather than calculate the number of candles he can make from the beeswax.
+7,VALID,The step correctly calculates the total hours worked as a coach based on the given weekly hours and number of working weeks.
+8,INVALID,The step incorrectly calculates the distance between the first and second stops without accounting for the second stop being 15 miles before the end.
+9,VALID,The arithmetic is correct and it follows logically from the problem and the preceding steps.
+10,INVALID,"Each chicken needs 3 cups of feed a day, not 2 cups."
+11,VALID,The arithmetic is correct and follows logically from the preceding steps.
+12,VALID,The step correctly states the distances given in the problem.
+13,VALID,The arithmetic is correct and it follows logically from the problem and the preceding steps.
+14,VALID,The statement directly reflects the given information in the problem.
+15,VALID,The arithmetic is correct and it logically follows from the preceding steps.
+16,VALID,The statement correctly restates the total distance to hike based on the given information.
+17,INVALID,The calculation for the profit difference should be based on the initial values before the market rise.
+18,VALID,The arithmetic is correct and the distances add up logically from the preceding steps.
+19,VALID,The arithmetic is correct and it logically follows from the preceding step.
+20,INVALID,"The cost per red tie should be 50% more than the cost per blue tie, which is $40, making it $60, not $60 as stated."
+21,INVALID,"The total time to hike should be the sum of the time already spent and the time needed for the remaining distance, which is 2 hours + 1.5 hours = 3.5 hours, not 2 hours."
+22,INVALID,The step incorrectly adds the remaining orange drink to the water content instead of calculating the water content separately.
+23,INVALID,"The calculation should be based on the number of cartons needed, not the number of servings."
+24,VALID,The arithmetic is correct and it follows logically from the problem and the preceding steps.
+25,INVALID,"The cost per red tie was calculated incorrectly; it should be based on the number of red ties bought, not the number of blue ties."
+26,VALID,The step correctly states the amount of blue fiber needed without arithmetic errors.
+27,INVALID,"The increase in value should be added to the total cost ($130,000) to find the new value, not the original purchase price ($80,000)."
+28,INVALID,"The step assumes the second train's distances can be added without specifying its speed or time, which is not provided in the problem."
+29,INVALID,"The number of articles on Wednesday should be calculated based on the number written on Tuesday, which is 7, not 14."
+30,VALID,The statement correctly reflects the initial number of post-it notes Candice had.
+31,INVALID,The sum of the guesses should be 240 before dividing by 3.
+32,VALID,The step correctly states the amount of blue fiber needed without arithmetic errors.
+33,INVALID,"The cost per red tie was incorrectly calculated as $60, when it should be based on the original cost of blue ties plus 50%."
+34,VALID,The step correctly states the formula to calculate distance and accurately describes the distance traveled by the first train in the first day.
