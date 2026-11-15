@@ -18,7 +18,8 @@ def main(out_dir="outputs", fig_dir="report/figures"):
     n = summary["Greedy (N=1)"]["Generation Calls"]
     prm = [(m, m.split("(")[1].split(",")[0].rstrip(")")) for m in summary if m.startswith("PRM")]
 
-    plt.rcParams.update({"font.size": 8, "axes.spines.top": False, "axes.spines.right": False})
+    plt.rcParams.update({"font.size": 8, "font.family": "serif", "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
+                         "mathtext.fontset": "stix", "axes.spines.top": False, "axes.spines.right": False})
     for name, x_sc, x_prm, label in [
         ("fig_calls", [c["N"] for c in curve], lambda r: r["Total LLM Calls"] / n, "LLM calls per problem"),
         ("fig_tokens", [c["Avg Gen Tokens / Problem"] for c in curve],
@@ -35,7 +36,7 @@ def main(out_dir="outputs", fig_dir="report/figures"):
         ax.grid(alpha=0.25, lw=0.5)
         ax.legend(frameon=False, fontsize=6.5, loc="lower right")
         fig.tight_layout()
-        fig.savefig(f"{fig_dir}/{name}.pdf")
+        fig.savefig(f"{fig_dir}/{name}.pdf", bbox_inches="tight")
         print("wrote", f"{fig_dir}/{name}.pdf")
 
 
