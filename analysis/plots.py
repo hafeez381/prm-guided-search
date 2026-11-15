@@ -23,18 +23,19 @@ def main(out_dir="outputs", fig_dir="report/figures"):
     for name, x_sc, x_prm, label in [
         ("fig_calls", [c["N"] for c in curve], lambda r: r["Total LLM Calls"] / n, "LLM calls per problem"),
         ("fig_tokens", [c["Avg Gen Tokens / Problem"] for c in curve],
-         lambda r: r["Avg Gen Tokens / Problem"] + r["Avg Judge Tokens / Problem"], "Output tokens per problem (generated + judge)"),
+         lambda r: r["Avg Gen Tokens / Problem"] + r["Avg Judge Tokens / Problem"], "Output tokens per problem"),
     ]:
-        fig, ax = plt.subplots(figsize=(3.3, 2.3))
-        ax.plot(x_sc, [c["Accuracy (%)"] for c in curve], "-o", color=SC, ms=2.5, lw=1.2, label="Self-consistency, N = 1..15")
+        fig, ax = plt.subplots(figsize=(2.7, 2.1))
+        ax.plot(x_sc, [c["Accuracy (%)"] for c in curve], "-o", color=SC, ms=2.5, lw=1.2, label="SC, $N$ = 1 to 15")
         for method, key in prm:
             r = summary[method]
             ax.scatter([x_prm(r)], [r["Accuracy (%)"]], color=PRM_COLORS[key], marker="D", s=22, zorder=3,
-                       label=f"PRM Best-of-5 ({key.replace('_', ' ')})")
+                       label=f"PRM, {key.replace('_', ' ')}")
         ax.set_xlabel(label)
         ax.set_ylabel("Accuracy (%)")
         ax.grid(alpha=0.25, lw=0.5)
-        ax.legend(frameon=False, fontsize=6.5, loc="lower right")
+        if name == "fig_calls":
+            ax.legend(frameon=False, fontsize=8, loc="lower right")
         fig.tight_layout()
         fig.savefig(f"{fig_dir}/{name}.pdf", bbox_inches="tight")
         print("wrote", f"{fig_dir}/{name}.pdf")
