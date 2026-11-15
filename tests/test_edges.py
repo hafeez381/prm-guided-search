@@ -240,3 +240,12 @@ def test_pipeline_row_from_mocks():
     assert set(row["predictions"]) == {"greedy", "sc5", "sc15", "prm_min", "prm_product", "prm_step_penalty_0.0",
                                        "prm_step_penalty_0.5", "prm_step_penalty_2.0"}
     assert "ground_truth_answer" not in row
+
+
+def test_paired_bootstrap_identical_vectors_give_zero_ci():
+    import numpy as np
+    from analysis import stats
+    v = np.array([1, 0, 1, 1, 0] * 10, dtype=float)
+    acc = {k: v.copy() for _, k in stats.METHODS}
+    _, diffs = stats.bootstrap(acc)
+    assert all(d["ci"] == [0.0, 0.0] and d["diff"] == 0.0 for d in diffs.values())
