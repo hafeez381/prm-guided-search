@@ -28,10 +28,16 @@ def aggregate_path_score(
       - 'step_penalty': mean(step_scores) - penalty_lambda * count(r_t == -1.0).
       - An unknown strategy raises ValueError.
     """
-    if strategy not in ("min", "product", "step_penalty"):
+    if strategy not in ("min", "product", "step_penalty", "product_logprob"):
         raise ValueError(f"unknown aggregation strategy: {strategy!r}")
     if not step_scores:
         return -1.0
+    if strategy == "product_logprob":
+        # Bonus: step_scores are the judge's P(VALID) per step, taken from its verdict-token logits.
+        product = 1.0
+        for p in step_scores:
+            product *= min(max(float(p), 1e-6), 1.0)
+        return product
     if strategy == "min":
         return float(min(step_scores))
     if strategy == "product":
