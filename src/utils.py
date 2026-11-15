@@ -261,3 +261,46 @@ def save_sc_scaling_curve(curve_list: list[dict[str, Any]], filepath: str = "out
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(curve_list, f, indent=2)
+
+
+def make_hf_judge_fn_with_scores(judge_model: Any, judge_tokenizer: Any) -> Callable[[str], dict]:
+    """
+    JudgeFn for the benchmark run. Same greedy decoding as make_hf_judge_fn, plus two extra keys:
+    'prompt_tokens' (judge input length after the chat template) and 'valid_prob', the softmax over the
+    raw logits of the VALID and INVALID tokens at the first generated verdict token (None if none appears).
+    """
+    import torch
+
+    pairs = []
+    for valid, invalid in ((" VALID", " INVALID"), ("VALID", "INVALID")):
+        v_ids = judge_tokenizer.encode(valid, add_special_tokens=False)
+        i_ids = judge_tokenizer.encode(invalid, add_special_tokens=False)
+        if len(v_ids) == 1 and len(i_ids) == 1 and v_ids != i_ids:
+            pairs.append((v_ids[0], i_ids[0]))
+    verdict_ids = {tok: pair for pair in pairs for tok in pair}
+    eos_ids = _get_eos_token_ids(judge_model, judge_tokenizer)
+
+    def judge_fn(judge_prompt: str) -> dict:
+        messages = [{"role": "user", "content": judge_prompt}]
+        formatted = judge_tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        inputs = judge_tokenizer(formatted, return_tensors="pt").to(judge_model.device)
+        prompt_len = inputs["input_ids"].shape[1]
+        with torch.no_grad():
+            out = judge_model.generate(**inputs, **JUDGE_GEN_KWARGS, pad_token_id=judge_tokenizer.eos_token_id,
+                                       output_logits=True, return_dict_in_generate=True)
+        gen_tokens = _slice_to_first_eos(out.sequences[0][prompt_len:], eos_ids)
+        valid_prob = None
+        for pos, tok in enumerate(gen_tokens.tolist()):
+            if tok in verdict_ids:
+                v_id, i_id = verdict_ids[tok]
+                logits = out.logits[pos][0].float()
+                valid_prob = torch.softmax(logits[[v_id, i_id]], dim=0)[0].item()
+                break
+        return {
+            "text": judge_tokenizer.decode(gen_tokens, skip_special_tokens=True),
+            "num_tokens": len(gen_tokens),
+            "prompt_tokens": int(prompt_len),
+            "valid_prob": valid_prob,
+        }
+
+    return judge_fn
