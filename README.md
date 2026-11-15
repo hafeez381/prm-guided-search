@@ -1,95 +1,85 @@
-# CS 5326: Advanced Generative AI and Agents
-## Programming Assignment 3: Search over Reasoning and Step-Level Process Reward Models
+# Process-reward search over reasoning paths on GSM8K
 
-**Design and Lead:** Muhammad Ahmad Sarfraz
+Inference-time search for multi-step math word problems with no weight updates. A policy model (`Qwen/Qwen2.5-1.5B-Instruct`, fp16) writes numbered reasoning steps, and a larger verifier (`Qwen/Qwen2.5-7B-Instruct`, 4-bit NF4) labels every step VALID or INVALID under local validity. Step labels are aggregated into a path score (min, product or step penalty), and PRM-guided Best-of-5 is compared with greedy decoding, self-consistency over the same 5 samples, and compute-matched self-consistency over 15 samples, on a fixed 50-problem subset of the GSM8K test split.
 
----
+Results on the 50 problems (one NVIDIA L4, seed 5326 + i). The 95 % CI is a percentile bootstrap over problems.
 
-### Overview
-This assignment explores **test-time compute** and **reasoning search** without modifying model parameters. You will implement:
-1. **Step-Structured Generation & Baseline Decoders:** Prompting schema enforcing numbered reasoning steps, robust regex answer parser, greedy decoding ($N=1$), and Self-Consistency majority voting ($N=5$).
-2. **Process Reward Model (PRM) Step-Level Verifier:** Step-by-step verification judge that evaluates whether intermediate reasoning steps are `VALID` or `INVALID`.
-3. **Path Aggregation Strategies:** Designing rules ($\min$-pooling, product of validity, and step error penalty) to score complete reasoning trajectories.
-4. **PRM-Guided Best-of-$N$ Search ($N=5$):** Ranking sampled paths using process rewards and selecting the most sound candidate.
-5. **Compute-Matched Self-Consistency ($N_{\text{SC}} \approx 15$):** Comparing whether spending test-time compute on step verification beats pure brute-force sampling at equal compute budget.
-6. **Benchmark Evaluation:** Running all configurations across the fixed 50-problem GSM8K subset (`data/gsm8k_test_50.jsonl`).
+| Method | Accuracy (%) | 95 % CI | Generation calls | Judge calls | Total LLM calls | Generated tokens / problem | Judge tokens / problem |
+|---|---:|---|---:|---:|---:|---:|---:|
+| Greedy (N=1) | 62 | [48, 74] | 50 | 0 | 50 | 207.8 | 0.0 |
+| Self-Consistency (N=5) | 76 | [64, 86] | 250 | 0 | 250 | 902.6 | 0.0 |
+| Compute-Matched SC (N=15) | 82 | [72, 92] | 750 | 0 | 750 | 2774.9 | 0.0 |
+| PRM Best-of-5 (min) | 76 | [64, 86] | 250 | 1203 | 1453 | 902.6 | 617.8 |
+| PRM Best-of-5 (product) | 74 | [62, 84] | 250 | 1203 | 1453 | 902.6 | 617.8 |
+| PRM Best-of-5 (step_penalty, lambda=2.0) | 74 | [62, 84] | 250 | 1203 | 1453 | 902.6 | 617.8 |
 
-For complete mathematical definitions, grading rubrics, and instructions, please refer to the assignment manual (`PA3.pdf`) released on the course LMS.
+Accuracy is exact match on the integer after the last `Final Answer:` line; a missing or non-integer answer counts as wrong. Calls and tokens follow the bookkeeping in `run_all.py`: one generated sequence is one generation call, one judged step is one judge call, and tokens are output tokens counted from token ids.
 
----
+## Setup
 
-### Repository Structure
-```
-cs5326-pa3/
-|-- data/
-|   `-- gsm8k_test_50.jsonl          # Fixed 50-problem evaluation benchmark
-|-- src/
-|   |-- __init__.py
-|   |-- generation.py                # Step prompt, greedy, self-consistency
-|   |-- extraction.py                # Regex parser for steps and numerical answers
-|   |-- prm_judge.py                 # Step-level verifier prompt & scoring loop
-|   |-- search.py                    # PRM-guided Best-of-N and budget tracking
-|   `-- utils.py                     # Dual-model loading, generate/judge callables, bookkeeping helpers
-|-- tests/
-|   |-- __init__.py
-|   |-- test_public_adapter_smoke.py # Public smoke test suite for grading interface
-|   `-- test_token_counting.py       # Offline token count test with batch padding
-|-- outputs/                         # Generated predictions and metric dumps
-|   |-- results_summary.json         # Automated metrics table across all 6 configurations
-|   |-- aggregation_ablation.json    # Aggregation strategies and lambda sweep ablation
-|   |-- sc_scaling_curve.json        # Self-consistency scaling curve (N=1..15)
-|   `-- per_problem.jsonl            # Detailed per-problem records and step scores
-|-- run_pipeline.ipynb               # End-to-end evaluation pipeline notebook (you create this)
-|-- submission_adapter.py            # Grading adapter contract (Required)
-|-- requirements.txt
-|-- pyproject.toml
-|-- make_submission.sh               # Submission bundler script
-|-- REPORT_TEMPLATE.md               # Scaffold for written report
-`-- README.md
-```
-
----
-
-### Getting Started
-
-#### 1. Setup Environment
-Kaggle's environment includes preinstalled PyTorch, Transformers, Accelerate, Datasets, and NumPy. On Kaggle, upgrade `bitsandbytes` to a modern release:
 ```bash
-pip install -q -U bitsandbytes
+python -m venv .venv && .venv/bin/pip install numpy pytest matplotlib
+.venv/bin/python -m pytest -q tests/                      # unit tests, no model or GPU needed
+.venv/bin/python tests/test_public_adapter_smoke.py      # adapter contract
+.venv/bin/python run_all.py --mode smoke                 # whole pipeline on 3 problems with mock models
 ```
-*(Note: Pinned legacy installs like `bitsandbytes==0.44.1` break on Kaggle's current image because `bitsandbytes 0.44` imports `triton.ops`, which no longer exists. Upgrading to unpinned `bitsandbytes>=0.45.5` resolves this).*
 
-#### 2. Run Public Smoke Tests
-The repository includes a public test suite to verify your adapter signatures and parsing math offline:
+The GPU run used torch 2.14.1, transformers 5.22.1 and bitsandbytes 0.50.2 (`pip install -U bitsandbytes` on top of the Colab image). Every script has `--mode smoke` (mock models, CPU, writes `outputs/_smoke/`) and `--mode full`. The seed is `5326 + i` for the problem at 0-based position `i`, set once before each problem.
+
+## Compute
+
+The benchmark ran on one NVIDIA L4 (Google Colab) with both models on `cuda:0`. On a two-GPU machine `load_models` places the generator on `cuda:0` and the verifier on `cuda:1`. The launcher is `colab/colab_run.sh`; `kaggle/push_job.sh` runs the same command as a Kaggle T4 ×2 kernel.
+
 ```bash
-pytest -v tests/test_public_adapter_smoke.py
+bash colab/colab_run.sh new L4
+bash colab/colab_run.sh setup                 # ships git archive HEAD, upgrades bitsandbytes
+bash colab/colab_run.sh launch full python run_all.py --mode full --start 0 --end 50 --out /content/out/per_problem_0_50.jsonl
+bash colab/colab_run.sh fetch /content/out/per_problem_0_50.jsonl runs/colab/per_problem_0_50.jsonl
+bash colab/colab_run.sh stop
 ```
-*(Initially, tests will fail with `NotImplementedError` until you implement the required adapter methods).*
 
-#### 3. Execution on Kaggle (GPU T4x2)
-Create a new Kaggle notebook, set the **Accelerator** in the top sidebar to **GPU T4x2**, and turn **Internet** to **On**. Clone the repository:
+## Reproducing the results
+
+**1. Format check.** Greedy decoding on all 50 problems, reporting step counts and the `Final Answer` line only.
+
 ```bash
-!git clone https://github.com/ahmad-sarfraz345/cs5326-pa3-starter.git
-%cd cs5326-pa3-starter
-!pip install -q -U bitsandbytes
+python compliance_check.py --mode full --out runs/compliance.jsonl
 ```
-Load the dual models (1.5B generator in fp16 on cuda:0, 7B judge in 4-bit NF4 on cuda:1):
-```python
-from src.utils import load_models, make_hf_generate_fn, make_hf_judge_fn
 
-gen_model, gen_tokenizer, judge_model, judge_tokenizer = load_models(
-    generator_device="cuda:0",
-    judge_device="cuda:1"
-)
-gen_fn = make_hf_generate_fn(gen_model, gen_tokenizer)
-judge_fn = make_hf_judge_fn(judge_model, judge_tokenizer)
-```
-*(Warning: Never use `device_map="auto"` across two GPUs for a single model!)*
+**2. Benchmark run.** Greedy, the shared 5-sample pool, step-level judging, the three aggregation rules with λ ∈ {0.0, 0.5, 2.0}, and 10 extra samples, one row per problem. The run resumes from its output file. The prompts are checked against `prompts.lock` first.
 
-#### 4. Packaging Your Submission
-When your implementation passes all tests and your benchmark run produces all required artifacts in `outputs/`:
 ```bash
-bash make_submission.sh <your_roll_number>
+python run_all.py --mode full --start 0 --end 50 --out runs/per_problem_0_50.jsonl
 ```
-This generates `<your_roll_number>_pa3.zip` containing `src/`, `submission_adapter.py`, `run_pipeline.ipynb` (or `run_all.py`), `outputs/per_problem.jsonl`, `outputs/results_summary.json`, `outputs/aggregation_ablation.json`, `outputs/sc_scaling_curve.json`, and `REPORT.pdf`. Upload this archive to LMS.
 
+**3. Artifacts.** Merges per-problem rows and writes `outputs/per_problem.jsonl`, `results_summary.json`, `aggregation_ablation.json`, `sc_scaling_curve.json` and `logprob_bonus.json`.
+
+```bash
+python run_all.py --merge runs/per_problem_0_50.jsonl
+```
+
+**4. Analysis.** Bootstrap confidence intervals (1,000 resamples over problems, seed 5326), paired win/loss counts, the 10× greedy token budget, the scaling figures, failure-case shortlists and the blinded judge-audit sheet.
+
+```bash
+python analysis/stats.py
+python analysis/plots.py
+python analysis/failures.py
+python analysis/audit.py draw      # then fill human_label in analysis/audit_sheet.csv
+python analysis/audit.py score
+```
+
+## Attribution
+
+- Starter files: `submission_adapter.py`, `src/utils.py` (model loading and the HF generate/judge factories), `parse_steps` in `src/extraction.py`, `tests/test_public_adapter_smoke.py`, `tests/test_token_counting.py`, `make_submission.sh` and `data/gsm8k_test_50.jsonl` come from the starter repository.
+- Libraries: PyTorch, Hugging Face Transformers and Accelerate, bitsandbytes, NumPy, matplotlib.
+- Models and data: Qwen2.5-1.5B-Instruct and Qwen2.5-7B-Instruct (Qwen Team), GSM8K (Cobbe et al., 2021).
+
+No code was copied from public implementations. Code was written with LLM assistance.
+
+## References
+
+- Cobbe et al. (2021). Training Verifiers to Solve Math Word Problems. arXiv:2110.14168.
+- Lightman et al. (2023). Let's Verify Step by Step. arXiv:2305.20050.
+- Wang et al. (2023). Self-Consistency Improves Chain of Thought Reasoning in Language Models. arXiv:2203.11171.
+- Snell et al. (2024). Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters. arXiv:2408.03314.
+- Qwen Team (2024). Qwen2.5 Technical Report. arXiv:2412.15115.
