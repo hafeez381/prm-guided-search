@@ -17,3 +17,10 @@ outputs/_smoke/
 runs/
 kaggle/output/
 kaggle/code/
+report/*.aux
+report/*.bbl
+report/*.blg
+report/*.fdb_latexmk
+report/*.fls
+report/*.log
+report/*.out
