@@ -1,7 +1,13 @@
 """
 src/search.py - Path aggregation, Best-of-N search, and compute-matched search.
 """
+import time
 from typing import Any, Callable
+
+from .generation import compute_majority_vote, run_self_consistency, sample_candidates
+from .prm_judge import score_path
+
+TIE_TOLERANCE = 1e-9
 
 GenerateFn = Callable[[str, int, dict], list[dict]]
 JudgeFn = Callable[[str], dict]
@@ -64,8 +70,24 @@ def select_best_path(
          'path_score' (float) and 'num_tied' (int, size of the tied set).
          Does not mutate the inputs.
     """
-    # TODO: Implement best path selection with answer=None filtering and majority tie-breaking
-    raise NotImplementedError("Implement select_best_path in src/search.py")
+    if not candidate_paths:
+        raise ValueError("select_best_path needs at least one candidate")
+    scores = [aggregate_path_score(c.get("step_scores") or [], aggregation_strategy, penalty_lambda)
+              for c in candidate_paths]
+    eligible = [i for i, c in enumerate(candidate_paths) if c.get("answer") is not None]
+    if not eligible:
+        eligible = list(range(len(candidate_paths)))
+    best = max(scores[i] for i in eligible)
+    tied = [i for i in eligible if abs(scores[i] - best) <= TIE_TOLERANCE]
+    pick = tied[0]
+    if len(tied) > 1:
+        vote = compute_majority_vote([candidate_paths[i].get("answer") for i in tied])
+        if vote is not None:
+            pick = next(i for i in tied if candidate_paths[i].get("answer") == vote)
+    chosen = dict(candidate_paths[pick])
+    chosen["path_score"] = float(scores[pick])
+    chosen["num_tied"] = len(tied)
+    return chosen
 
 
 def run_prm_best_of_n(
@@ -96,8 +118,29 @@ def run_prm_best_of_n(
       selected, answer, candidates [each augmented with step_scores, rationales],
       generation_calls, judge_calls, generated_tokens, judge_tokens, time_seconds
     """
-    # TODO: Implement PRM Best-of-N search over candidate trajectories
-    raise NotImplementedError("Implement run_prm_best_of_n in src/search.py")
+    start = time.perf_counter()
+    if candidates is None:
+        sampled = run_self_consistency(model, gen_tokenizer, question, n=n, generate_fn=generate_fn)
+        pool, generation_calls, generated_tokens = sampled["candidates"], sampled["generation_calls"], sampled["generated_tokens"]
+    else:
+        pool, generation_calls, generated_tokens = candidates, 0, 0
+    augmented, judge_calls, judge_tokens = [], 0, 0
+    for candidate in pool:
+        scored = score_path(judge_model, judge_tokenizer, question, candidate, judge_fn=judge_fn)
+        augmented.append(dict(candidate, **scored))
+        judge_calls += scored["judge_calls"]
+        judge_tokens += scored["judge_tokens"]
+    selected = select_best_path(augmented, aggregation_strategy, penalty_lambda)
+    return {
+        "selected": selected,
+        "answer": selected.get("answer"),
+        "candidates": augmented,
+        "generation_calls": generation_calls,
+        "judge_calls": judge_calls,
+        "generated_tokens": generated_tokens,
+        "judge_tokens": judge_tokens,
+        "time_seconds": time.perf_counter() - start,
+    }
 
 
 def run_compute_matched_self_consistency(
@@ -118,5 +161,16 @@ def run_compute_matched_self_consistency(
       candidates, answer, generation_calls (new samples only), total_samples,
       generated_tokens (new samples only), time_seconds
     """
-    # TODO: Implement compute-matched Self-Consistency with sample reuse
-    raise NotImplementedError("Implement run_compute_matched_self_consistency in src/search.py")
+    start = time.perf_counter()
+    existing = list(existing_candidates or [])
+    deficit = max(target_calls - len(existing), 0)
+    new = sample_candidates(model, tokenizer, question, deficit, temperature, generate_fn)
+    pool = existing + new
+    return {
+        "candidates": pool,
+        "answer": compute_majority_vote([c.get("answer") for c in pool]),
+        "generation_calls": len(new),
+        "total_samples": len(pool),
+        "generated_tokens": sum(c["num_tokens"] for c in new),
+        "time_seconds": time.perf_counter() - start,
+    }

@@ -174,3 +174,51 @@ def test_product_never_ties_sound_paths_of_different_length():
     s4 = adapter.aggregate_path_score([1.0] * 4, "product")
     s5 = adapter.aggregate_path_score([1.0] * 5, "product")
     assert s4 - s5 > 1e-9
+
+
+def test_select_best_path_vote_among_tied_only():
+    cands = [{"step_scores": [1.0], "answer": a} for a in [5, 3, 3, 4, 4]]
+    win = adapter.select_best_path(cands)
+    assert win["answer"] == 3 and win["num_tied"] == 5
+    flawed = [{"step_scores": [-1.0], "answer": 7}, {"step_scores": [-1.0], "answer": 7},
+              {"step_scores": [1.0], "answer": 9}]
+    assert adapter.select_best_path(flawed)["answer"] == 9
+
+
+def test_select_best_path_product_breaks_tie_by_length():
+    cands = [{"step_scores": [1.0] * 5, "answer": 1}, {"step_scores": [1.0] * 4, "answer": 2},
+             {"step_scores": [1.0] * 5, "answer": 1}]
+    win = adapter.select_best_path(cands, "product")
+    assert win["answer"] == 2 and win["num_tied"] == 1
+    assert adapter.select_best_path(cands, "min")["answer"] == 1
+
+
+def test_select_best_path_empty_steps_score_minus_one():
+    cands = [{"step_scores": [], "answer": 1}, {"step_scores": [-1.0, 1.0], "answer": 2}]
+    win = adapter.select_best_path(cands, "step_penalty", 0.0)
+    assert win["answer"] == 2 and win["path_score"] == 0.0
+
+
+def test_best_of_n_does_not_mutate_shared_pool():
+    import copy
+    pool = [{"completion": "c", "steps": ["a", "b"], "answer": 3, "num_tokens": 5}]
+    snapshot = copy.deepcopy(pool)
+    res = adapter.run_prm_best_of_n(question="Q", candidates=pool,
+                                    judge_fn=lambda p: {"text": "Verdict: VALID\nRationale: ok.", "num_tokens": 2})
+    assert pool == snapshot
+    assert res["judge_calls"] == 2 and res["judge_tokens"] == 4 and res["generation_calls"] == 0
+    assert res["candidates"][0]["step_scores"] == [1.0, 1.0]
+
+
+def test_compute_matched_samples_only_the_deficit():
+    calls = []
+
+    def gen(prompt, n, kw):
+        calls.append(n)
+        return [{"text": "Step 1: x\nFinal Answer: 1", "num_tokens": 3}] * n
+
+    full = [{"completion": "", "steps": [], "answer": 2, "num_tokens": 9}] * 15
+    res = adapter.run_compute_matched_self_consistency(question="Q", existing_candidates=full, generate_fn=gen)
+    assert calls == [] and res["generation_calls"] == 0 and res["total_samples"] == 15
+    res = adapter.run_compute_matched_self_consistency(question="Q", target_calls=3, generate_fn=gen)
+    assert calls == [3] and res["generated_tokens"] == 9 and res["answer"] == 1
