@@ -1,0 +1,473 @@
+{
+  "judge_false_positive_candidates": [
+    {
+      "id": "gsm8k_test_09",
+      "candidate": 3,
+      "answer": 355,
+      "ground_truth": 45,
+      "steps": 5
+    },
+    {
+      "id": "gsm8k_test_10",
+      "candidate": 3,
+      "answer": 500,
+      "ground_truth": 460,
+      "steps": 3
+    },
+    {
+      "id": "gsm8k_test_12",
+      "candidate": 0,
+      "answer": 794,
+      "ground_truth": 694,
+      "steps": 4
+    },
+    {
+      "id": "gsm8k_test_13",
+      "candidate": 0,
+      "answer": 12,
+      "ground_truth": 13,
+      "steps": 5
+    },
+    {
+      "id": "gsm8k_test_13",
+      "candidate": 2,
+      "answer": 12,
+      "ground_truth": 13,
+      "steps": 3
+    },
+    {
+      "id": "gsm8k_test_13",
+      "candidate": 4,
+      "answer": 12,
+      "ground_truth": 13,
+      "steps": 3
+    },
+    {
+      "id": "gsm8k_test_16",
+      "candidate": 2,
+      "answer": 2975,
+      "ground_truth": 125,
+      "steps": 3
+    },
+    {
+      "id": "gsm8k_test_16",
+      "candidate": 4,
+      "answer": 2971,
+      "ground_truth": 125,
+      "steps": 4
+    },
+    {
+      "id": "gsm8k_test_18",
+      "candidate": 2,
+      "answer": 1550,
+      "ground_truth": 57500,
+      "steps": 5
+    },
+    {
+      "id": "gsm8k_test_18",
+      "candidate": 3,
+      "answer": 18200,
+      "ground_truth": 57500,
+      "steps": 4
+    },
+    {
+      "id": "gsm8k_test_26",
+      "candidate": 3,
+      "answer": 3,
+      "ground_truth": 2,
+      "steps": 3
+    },
+    {
+      "id": "gsm8k_test_30",
+      "candidate": 4,
+      "answer": 94,
+      "ground_truth": 104,
+      "steps": 5
+    },
+    {
+      "id": "gsm8k_test_32",
+      "candidate": 1,
+      "answer": 50,
+      "ground_truth": 80,
+      "steps": 5
+    },
+    {
+      "id": "gsm8k_test_43",
+      "candidate": 2,
+      "answer": 32,
+      "ground_truth": 26,
+      "steps": 3
+    },
+    {
+      "id": "gsm8k_test_44",
+      "candidate": 0,
+      "answer": 240,
+      "ground_truth": 48,
+      "steps": 4
+    },
+    {
+      "id": "gsm8k_test_44",
+      "candidate": 2,
+      "answer": 240,
+      "ground_truth": 48,
+      "steps": 4
+    },
+    {
+      "id": "gsm8k_test_48",
+      "candidate": 0,
+      "answer": 200,
+      "ground_truth": 800,
+      "steps": 7
+    },
+    {
+      "id": "gsm8k_test_48",
+      "candidate": 2,
+      "answer": 500,
+      "ground_truth": 800,
+      "steps": 4
+    },
+    {
+      "id": "gsm8k_test_49",
+      "candidate": 1,
+      "answer": 24,
+      "ground_truth": 8,
+      "steps": 2
+    },
+    {
+      "id": "gsm8k_test_49",
+      "candidate": 3,
+      "answer": 5,
+      "ground_truth": 8,
+      "steps": 4
+    }
+  ],
+  "judge_false_negative_candidates": [
+    {
+      "id": "gsm8k_test_02",
+      "candidate": 4,
+      "invalid_steps": [
+        3
+      ],
+      "rationales": [
+        "The problem asks for the total number of bolts for one robe, not for multiple robes."
+      ]
+    },
+    {
+      "id": "gsm8k_test_06",
+      "candidate": 4,
+      "invalid_steps": [
+        2
+      ],
+      "rationales": [
+        "The calculation should consider both the first and second glasses' pricing pattern for each pair."
+      ]
+    },
+    {
+      "id": "gsm8k_test_11",
+      "candidate": 1,
+      "invalid_steps": [
+        3
+      ],
+      "rationales": [
+        "The second month's downloads should not be summed again after reduction."
+      ]
+    },
+    {
+      "id": "gsm8k_test_11",
+      "candidate": 4,
+      "invalid_steps": [
+        2,
+        4
+      ],
+      "rationales": [
+        "The reduction should be applied to the second month's value, not recalculated as a percentage decrease from the original first month's value.",
+        "The second month's downloads were already calculated correctly as 180, so they should not be recalculated as 126 in the current step."
+      ]
+    },
+    {
+      "id": "gsm8k_test_20",
+      "candidate": 0,
+      "invalid_steps": [
+        1,
+        4,
+        5
+      ],
+      "rationales": [
+        "The step incorrectly assumes Marissa's speed for the second segment is the same as the first, without considering the total time and distance needed for the average speed.",
+        "The step assumes she needs to walk the remaining distance in the same time as the first 4 miles, which is not necessarily required for an average speed of 4 miles per hour over the entire distance.",
+        "The problem states Marissa needs an overall average speed of 4 miles per hour for the entire 12 miles, not just for the remaining distance."
+      ]
+    },
+    {
+      "id": "gsm8k_test_20",
+      "candidate": 3,
+      "invalid_steps": [
+        5,
+        9,
+        10,
+        11
+      ],
+      "rationales": [
+        "The total time to hike should be calculated based on the desired average speed and total distance.",
+        "The total time to hike should be calculated based on the desired average speed and total distance, not just the time already spent.",
+        "The total distance to hike should be recalculated after the remaining distance is considered.",
+        "The total time to hike should be the sum of the time already spent and the time needed for the remaining distance, which is 2 hours + 1.5 hours = 3.5 hours, not 2 hours."
+      ]
+    },
+    {
+      "id": "gsm8k_test_21",
+      "candidate": 1,
+      "invalid_steps": [
+        0,
+        5,
+        7
+      ],
+      "rationales": [
+        "The calculation should be exact, which results in 6.666...",
+        "The calculation for the remaining orange drink should be based on the initial amount minus the spilled amount, which is 9 liters, not derived from the total liquid and water amounts.",
+        "The step incorrectly redefines the total volume without considering the spillage."
+      ]
+    },
+    {
+      "id": "gsm8k_test_23",
+      "candidate": 1,
+      "invalid_steps": [
+        4,
+        5
+      ],
+      "rationales": [
+        "The last 3 customers do not buy any DVDs, so their contribution to the total should be 0, not 7 multiplied by 0.",
+        "The last 3 customers did not buy any DVDs, so their contribution to the total should be 0, not 7*0."
+      ]
+    },
+    {
+      "id": "gsm8k_test_23",
+      "candidate": 2,
+      "invalid_steps": [
+        0
+      ],
+      "rationales": [
+        "The current step does not follow from the problem statement or preceding steps."
+      ]
+    },
+    {
+      "id": "gsm8k_test_27",
+      "candidate": 1,
+      "invalid_steps": [
+        3
+      ],
+      "rationales": [
+        "The step should calculate the total cost for all items, not just shorts."
+      ]
+    },
+    {
+      "id": "gsm8k_test_29",
+      "candidate": 0,
+      "invalid_steps": [
+        0,
+        1,
+        2
+      ],
+      "rationales": [
+        "The current step incorrectly states that to find the distance between the first and second stops, one should subtract the distance of the first stop from the total distance.",
+        "The current step should focus on the distance between the first and second stops, not the remaining distance to the end of the trip.",
+        "The current step incorrectly assumes the distance between the first and second stops is 40 miles, which is not derived from the given information."
+      ]
+    },
+    {
+      "id": "gsm8k_test_30",
+      "candidate": 0,
+      "invalid_steps": [
+        4
+      ],
+      "rationales": [
+        "The boots should cost $5 more than the combined cost of the two pairs of heels, which is $99, making the boots $104, not the other way around."
+      ]
+    },
+    {
+      "id": "gsm8k_test_30",
+      "candidate": 1,
+      "invalid_steps": [
+        1,
+        3,
+        4
+      ],
+      "rationales": [
+        "The cost of the second pair of heels should be twice the cost of the first pair, which is $66, not $66.",
+        "The cost of the second pair of heels should be twice the first, making it $66, not $66.",
+        "The cost of the second pair of heels should be twice the first, making it $66, not $66 as stated."
+      ]
+    },
+    {
+      "id": "gsm8k_test_32",
+      "candidate": 3,
+      "invalid_steps": [
+        3
+      ],
+      "rationales": [
+        "The division should be 240 divided by 3, which equals 80, not just stated as 80."
+      ]
+    },
+    {
+      "id": "gsm8k_test_32",
+      "candidate": 4,
+      "invalid_steps": [
+        4
+      ],
+      "rationales": [
+        "The sum of the guesses should be 240 before dividing by 3."
+      ]
+    },
+    {
+      "id": "gsm8k_test_33",
+      "candidate": 0,
+      "invalid_steps": [
+        1
+      ],
+      "rationales": [
+        "The step should state the total weekly hours instead of reiterating daily hours."
+      ]
+    },
+    {
+      "id": "gsm8k_test_36",
+      "candidate": 1,
+      "invalid_steps": [
+        3
+      ],
+      "rationales": [
+        "The calculation should be based on 25% of the initial score, not just the points scored in the first 20 minutes."
+      ]
+    },
+    {
+      "id": "gsm8k_test_36",
+      "candidate": 2,
+      "invalid_steps": [
+        3
+      ],
+      "rationales": [
+        "The calculation should be based on 25% of 4 points, which is 1 point, but the step adds this to the initial 4 points without stating the final result correctly."
+      ]
+    },
+    {
+      "id": "gsm8k_test_36",
+      "candidate": 4,
+      "invalid_steps": [
+        2
+      ],
+      "rationales": [
+        "25% of 4 points is 1 point, which is incorrect; it should be 1 point."
+      ]
+    },
+    {
+      "id": "gsm8k_test_37",
+      "candidate": 0,
+      "invalid_steps": [
+        1
+      ],
+      "rationales": [
+        "The statement \"There are 30 days in 30 days\" is redundant and does not contribute to solving the problem."
+      ]
+    },
+    {
+      "id": "gsm8k_test_37",
+      "candidate": 1,
+      "invalid_steps": [
+        1,
+        5
+      ],
+      "rationales": [
+        "The statement does not contribute to solving the problem and does not logically follow from the previous step.",
+        "The calculation assumes the price per yogurt remains constant without considering the bulk purchase discount."
+      ]
+    },
+    {
+      "id": "gsm8k_test_38",
+      "candidate": 2,
+      "invalid_steps": [
+        2,
+        3,
+        4
+      ],
+      "rationales": [
+        "The calculation should result in $35 left, but the problem states he has $5 left.",
+        "The calculation should include the initial amount before spending, which is $195, not $40.",
+        "The division should result in a whole number since the number of lego sets must be a whole number, and the calculation should consider the leftover money correctly."
+      ]
+    },
+    {
+      "id": "gsm8k_test_39",
+      "candidate": 1,
+      "invalid_steps": [
+        2
+      ],
+      "rationales": [
+        "The speed calculation should consider the distance run each day separately."
+      ]
+    },
+    {
+      "id": "gsm8k_test_41",
+      "candidate": 2,
+      "invalid_steps": [
+        3
+      ],
+      "rationales": [
+        "The current step incorrectly calculates Ben's iPhone age instead of stating it."
+      ]
+    },
+    {
+      "id": "gsm8k_test_42",
+      "candidate": 2,
+      "invalid_steps": [
+        0
+      ],
+      "rationales": [
+        "The step does not consider the effect of the sapphire gemstone on Polly's throwing distance."
+      ]
+    },
+    {
+      "id": "gsm8k_test_45",
+      "candidate": 0,
+      "invalid_steps": [
+        0
+      ],
+      "rationales": [
+        "The step incorrectly assumes Charlie needs to make 20 candles to use 2 pounds of beeswax, instead of calculating how much beeswax is needed for 20 candles."
+      ]
+    },
+    {
+      "id": "gsm8k_test_45",
+      "candidate": 1,
+      "invalid_steps": [
+        0,
+        1
+      ],
+      "rationales": [
+        "The current step restates the number of candles Charlie wants to sell rather than calculate the number of candles he can make from the beeswax.",
+        "The cost per candle should be calculated based on the total beeswax used, not individually."
+      ]
+    },
+    {
+      "id": "gsm8k_test_46",
+      "candidate": 2,
+      "invalid_steps": [
+        2
+      ],
+      "rationales": [
+        "The number of articles on Wednesday should be calculated based on the number written on Tuesday, which is 7, not 14."
+      ]
+    },
+    {
+      "id": "gsm8k_test_47",
+      "candidate": 2,
+      "invalid_steps": [
+        1,
+        3
+      ],
+      "rationales": [
+        "The calculation should be based on the total initial amount plus the purchase minus the remaining, not just the difference between used and initial.",
+        "The calculation should be based on the total initial notes plus the purchased ones minus the remaining notes."
+      ]
+    }
+  ],
+  "shared_flawed_premise_candidates": []
+}

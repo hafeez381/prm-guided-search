@@ -1,0 +1,149 @@
+{
+  "accuracy": {
+    "greedy": 62.0,
+    "sc5": 76.0,
+    "sc15": 82.0,
+    "prm_min": 76.0,
+    "prm_product": 74.0,
+    "prm_step_penalty_2.0": 74.0
+  },
+  "ci95": {
+    "greedy": [
+      48.0,
+      74.0
+    ],
+    "sc5": [
+      64.0,
+      86.0
+    ],
+    "sc15": [
+      72.0,
+      92.0
+    ],
+    "prm_min": [
+      64.0,
+      86.0
+    ],
+    "prm_product": [
+      61.95,
+      84.0
+    ],
+    "prm_step_penalty_2.0": [
+      61.95,
+      84.0
+    ]
+  },
+  "paired_differences": {
+    "prm_min - sc5": {
+      "diff": 0.0,
+      "ci": [
+        0.0,
+        0.0
+      ]
+    },
+    "prm_min - sc15": {
+      "diff": -6.0,
+      "ci": [
+        -14.0,
+        0.0
+      ]
+    },
+    "prm_product - sc5": {
+      "diff": -2.0,
+      "ci": [
+        -10.0,
+        4.0
+      ]
+    },
+    "prm_product - sc15": {
+      "diff": -8.0,
+      "ci": [
+        -18.0,
+        -2.0
+      ]
+    },
+    "prm_step_penalty_2.0 - sc5": {
+      "diff": -2.0,
+      "ci": [
+        -10.0,
+        4.0
+      ]
+    },
+    "prm_step_penalty_2.0 - sc15": {
+      "diff": -8.0,
+      "ci": [
+        -18.0,
+        0.0
+      ]
+    }
+  },
+  "win_loss": {
+    "prm_min vs sc5": {
+      "prm_wins": 0,
+      "baseline_wins": 0,
+      "both_right": 38,
+      "both_wrong": 12
+    },
+    "prm_min vs sc15": {
+      "prm_wins": 0,
+      "baseline_wins": 3,
+      "both_right": 38,
+      "both_wrong": 9
+    },
+    "prm_product vs sc5": {
+      "prm_wins": 1,
+      "baseline_wins": 2,
+      "both_right": 36,
+      "both_wrong": 11
+    },
+    "prm_product vs sc15": {
+      "prm_wins": 0,
+      "baseline_wins": 4,
+      "both_right": 37,
+      "both_wrong": 9
+    },
+    "prm_step_penalty_2.0 vs sc5": {
+      "prm_wins": 1,
+      "baseline_wins": 2,
+      "both_right": 36,
+      "both_wrong": 11
+    },
+    "prm_step_penalty_2.0 vs sc15": {
+      "prm_wins": 1,
+      "baseline_wins": 5,
+      "both_right": 36,
+      "both_wrong": 8
+    }
+  },
+  "budget": {
+    "greedy_tokens": 10389,
+    "budget_10x": 103890,
+    "prm_spent": 76021,
+    "prm_gen_tokens": 45131,
+    "prm_judge_output_tokens": 30890,
+    "prm_judge_prompt_tokens": 451896,
+    "judge_calls": 1203,
+    "judge_prompt_tokens_per_call": 375.6,
+    "judge_output_tokens_per_call": 25.7,
+    "gen_tokens_per_sample": 180.5,
+    "sc_tokens_by_n": {
+      "1": 9017,
+      "2": 18337,
+      "3": 27016,
+      "4": 36079,
+      "5": 45131,
+      "6": 54156,
+      "7": 63715,
+      "8": 73061,
+      "9": 83014,
+      "10": 92229,
+      "11": 101539,
+      "12": 111734,
+      "13": 120672,
+      "14": 129777,
+      "15": 138744
+    },
+    "largest_sc_n_within_budget": 11,
+    "prm_within_budget": true
+  }
+}

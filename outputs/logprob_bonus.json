@@ -1,0 +1,7 @@
+{
+  "Strategy": "product_logprob",
+  "Logit comparison": "first verdict token, VALID vs INVALID",
+  "Accuracy (%)": 72.0,
+  "Tie Rate (%)": 0.0,
+  "Verdict agreement (%)": 100.0
+}
